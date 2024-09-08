@@ -46,7 +46,8 @@ struct Queue {
         : default_ele_(d), size_(s), head_(1), tail_(1) {
         container_.resize(size_ + 2, default_ele_);
     }
-    void enque(T input) {
+    ~Queue() = default;
+    void enqueue(T input) {
         if (isFull()) {
             std::cerr << "overflow\n";
             return;
@@ -60,7 +61,7 @@ struct Queue {
         printState();
         printRealState();
     }
-    T deque() {
+    T dequeue() {
         if (isEmpty()) {
             std::cerr << "underflow\n";
             return default_ele_;
