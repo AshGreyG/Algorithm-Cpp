@@ -225,15 +225,3 @@ struct BigInteger {
         );
     }
 };
-
-int main() {
-    std::string a, b;
-    std::cin >> a >> b;
-    BigInteger big_a(a);
-    BigInteger big_b(b);
-    auto c = big_a / big_b;
-    c.first.print();
-    std::cout << "\n";
-    c.second.print();
-    return 0;
-}
