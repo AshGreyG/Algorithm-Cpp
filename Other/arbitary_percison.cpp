@@ -23,6 +23,13 @@ struct BigInteger {
             }
         );
     }
+    BigInteger(const char* input) : size_(sizeof(input)), inner_str_(std::string(input)) {
+        std::for_each(input, input + sizeof(input) - 1,
+            [&] (char ch_input) {
+                storage_.push_back(ch_input - '0');
+            }
+        );
+    }
     BigInteger(const BigInteger& copy) {
         storage_ = copy.storage_;
         inner_str_ = copy.inner_str_;
@@ -63,12 +70,16 @@ struct BigInteger {
             new_biginteger.storage_.resize(max_length);
         }
         new_biginteger.size_ = new_biginteger.storage_.size();
+        std::for_each(new_biginteger.storage_.begin(), new_biginteger.storage_.end(),
+            [&] (int i) {
+                new_biginteger.inner_str_ += std::to_string(i);
+            }
+        );
         return new_biginteger;
     }
     BigInteger operator-(BigInteger& another) {
         if (*this == another) {
-            std::string zero = "0";
-            return BigInteger(zero);
+            return BigInteger("0");
         } else if (*this < another) {
             return another - *this;
         }
@@ -96,6 +107,11 @@ struct BigInteger {
         }
         new_biginteger.storage_.resize(last_zero);
         new_biginteger.size_ = new_biginteger.storage_.size();
+        std::for_each(new_biginteger.storage_.begin(), new_biginteger.storage_.end(),
+            [&] (int i) {
+                new_biginteger.inner_str_ += std::to_string(i);
+            }
+        );
         return new_biginteger;
     }
     BigInteger operator*(BigInteger& another) {
@@ -125,11 +141,15 @@ struct BigInteger {
         }
         new_biginteger.storage_.resize(last_zero);
         new_biginteger.size_ = new_biginteger.storage_.size();
+        std::for_each(new_biginteger.storage_.begin(), new_biginteger.storage_.end(),
+            [&] (int i) {
+                new_biginteger.inner_str_ += std::to_string(i);
+            }
+        );
         return new_biginteger;
     }
     std::pair<BigInteger, BigInteger> operator/(BigInteger& another) {
-        std::string zero = "0", one = "1";
-        BigInteger big_zero(zero), big_one(one);
+        BigInteger big_zero("0"), big_one("1");
         auto floor_multiple_str = another.inner_str_ + std::string(size_ - another.size_, '0');
         BigInteger floor_multiple(floor_multiple_str);
         if (floor_multiple > *this) {
@@ -217,11 +237,15 @@ struct BigInteger {
     bool operator>=(BigInteger& another) {
         return (*this > another) || (*this == another);
     }
-    void print() {
-        std::for_each(storage_.rbegin(), storage_.rend(),
-            [&] (unsigned int n) {
-                std::cout << n;
-            }
-        );
+    std::string& toString() {
+        return inner_str_;
+    }
+    friend std::ostream& operator<<(std::ostream& os, const BigInteger& bi) {
+        std::cout << bi.inner_str_;
+        return os;
+    }
+    friend std::ostream& operator<<(std::ostream& os, const std::pair<BigInteger, BigInteger> pair_bi) {
+        std::cout << std::get<0>(pair_bi) << " " << std::get<1>(pair_bi);
+        return os;
     }
 };
