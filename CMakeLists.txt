@@ -14,4 +14,10 @@ set(TEST_STACK_SOURCE
     test/test_stack.cpp
 )
 
+set(TEST_BUBBULE_SORT
+    Sort/bubble_sort.h
+    test/test_bubble_sort.cpp
+)
+
 add_executable(Test-Stack ${TEST_STACK_SOURCE})
+add_executable(Test-Bubble-Sort ${TEST_BUBBULE_SORT})
