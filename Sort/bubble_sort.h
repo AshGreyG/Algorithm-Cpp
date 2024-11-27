@@ -8,6 +8,7 @@
 template<typename...Args>
 void print(Args...args) {
     int _[] { 0, (std::cout << args << " ", 0)...};
+    std::cout << std::endl;
 }
 
 template<typename T, size_t N>
@@ -25,10 +26,10 @@ void bubbleSort(bool invert, Args...args) {
     if (invert) {
         while (flag) {
             flag = false;
-            for (int i = 1; i <= sizeof...(args); ++i) {
-                if (input[i - 1] < input[i]) {
+            for (int i = 0; i < sizeof...(args) - 1; ++i) {
+                if (input[i] < input[i + 1]) {
                     flag = true;
-                    std::swap(input[i - 1], input[i]);
+                    std::swap(input[i], input[i + 1]);
                 }
                 print(input);
             }
@@ -36,10 +37,10 @@ void bubbleSort(bool invert, Args...args) {
     } else {
         while (flag) {
             flag = false;
-            for (int i = 1; i <= sizeof...(args); ++i) {
-                if (input[i - 1] > input[i]) {
+            for (int i = 0; i < sizeof...(args) - 1; ++i) {
+                if (input[i] > input[i + 1]) {
                     flag = true;
-                    std::swap(input[i - 1], input[i]);
+                    std::swap(input[i], input[i + 1]);
                 }
                 print(input);
             }
