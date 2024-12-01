@@ -1,8 +1,12 @@
+#ifndef ARBITARY_PERCISION_H
+#define ARBITARY_PERCISION_H
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include <stdexcept>
 
 using namespace std::string_literals;
 
@@ -10,51 +14,193 @@ using namespace std::string_literals;
 // the result of `-` operator is still positive. This 
 // is different from the accurate definition of BigInteger
 
+/**
+ * @author: AshGrey
+ * @date:   2024-12-01
+ */
 struct BigInteger {
-  private:
-    std::vector<int> storage_;
-    std::string inner_str_;
-    unsigned int size_;
   public:
-    BigInteger(std::string& input) : size_(input.length()), inner_str_(input) {
-        std::for_each(input.rbegin(), input.rend(),
-            [&] (char ch_input) {
-                storage_.push_back(ch_input - '0');
+    /**
+     * @program:     BigInteger::BigInteger
+     * @description: When the parameter of Constructor is std::string, copy it to the storage_
+     */
+    BigInteger(const std::string& input) {
+        int has_signed, index = -1;
+        std::string correct;
+
+        // has_signed aims to avoid get the sign of the explicit signed BigInteger.
+        // index aims to find the +000000001234
+        //                                 ^ (position of the tail of continous 0 head)
+        // correct aims to deal with the wrong syntax
+        
+        for (int i = 0; i < input.size(); ++i) {
+            try {
+                if (((input[i] == '-' || input[i] == '+') && i != 0)                            // such as -000-89
+                 || (input[i] < '0' && input[i] > '9' && input[i] != '-' && input[i] != '+')) { // such as 00^^
+                    throw std::invalid_argument(input + "\n" +
+                                                std::string(i, ' ') + 
+                                                "^ Invalid " + input[i] + " character.\n");
+                }
+                if (input[i] >= '1' && input[i] <= '9' && index == -1) {
+                    index = i;
+                }
+            } catch (std::invalid_argument& err) {
+                std::cerr << err.what();
             }
-        );
+        }
+
+        // 1. -00000000
+        //            ^ index = -1
+        // 2. -000000123
+        //           ^ index
+        // 3. +1234
+        //     ^ index
+        // 4. 1234
+        //    ^ index
+        // 5. 0000012034
+        //         ^ index
+
+        if ((input[0] == '+' || input[0] == '-') && index != -1) {
+            correct = std::string(1, input[0]) + input.substr(index);
+        } else if (input[0] != '+' && input[0] != '-') {
+            correct = input.substr(index);
+        } else if (index == -1) {
+            correct = "0";
+        }
+
+        if (correct[0] == '+') {
+            has_signed = 1;
+            is_positive_ = true;
+            size_ = correct.size() - 1;
+            inner_str_ = correct;
+        } else if (correct[0] == '-') {
+            has_signed = 1;
+            is_positive_ = false;
+            size_ = correct.size() - 1;
+            inner_str_ = correct;
+        } else {
+            has_signed = 0;
+            is_positive_ = true;
+            size_ = correct.size();
+            inner_str_ = "+" + correct;
+            
+            // When there is no sign, we consider the BigInteger is positive by default.
+        }
+
+        for (auto it = correct.rbegin(); it != correct.rend() - has_signed; ++it) {
+            const auto char_input = *it;
+            storage_.push_back(char_input - '0');
+        }
     }
-    BigInteger(const char* input) : size_(sizeof(input)), inner_str_(std::string(input)) {
-        std::for_each(input, input + sizeof(input) - 1,
-            [&] (char ch_input) {
-                storage_.push_back(ch_input - '0');
+
+    /**  
+     * @program:     BigInteger::BigInteger
+     * @description: When the parameter of Constructor is const char* (that means 
+                    the parameter is the style of "123" but not "123"s), copy it.
+     */
+    BigInteger(const char* input) {
+        int has_signed, index = -1;
+        std::string input_str(input), correct;
+
+        // has_signed aims to avoid get the sign of the explicit signed BigInteger.
+
+        for (int i = 0; i < input_str.size(); ++i) {
+            try {
+                if (((input_str[i] == '-' || input_str[i] == '+') && i != 0)                            
+                 || (input_str[i] < '0' && input_str[i] > '9' && input_str[i] != '-' && input_str[i] != '+')) { 
+                    throw std::invalid_argument(input_str + "\n" +
+                                                std::string(i, ' ') + 
+                                                "^ Invalid " + input_str[i] + " character.\n");
+                }
+                if (input_str[i] >= '1' && input_str[i] <= '9' && index == -1) {
+                    index = i;
+                }
+            } catch (std::invalid_argument& err) {
+                std::cerr << err.what();
             }
-        );
+        }
+        if (input_str[0] == '+' || input_str[0] == '-') {
+            correct = std::string(1, input_str[0]) + input_str.substr(index);
+        } else {
+            correct = input_str.substr(index);
+        }
+
+        if (correct[0] == '+') {
+            has_signed = 1;
+            is_positive_ = true;
+            size_ = correct.size() - 1;
+            inner_str_ = correct;
+        } else if (correct[0] == '-') {
+            has_signed = 1;
+            is_positive_ = false;
+            size_ = correct.size() - 1;
+            inner_str_ = correct;
+        } else {
+            has_signed = 0;
+            is_positive_ = true;
+            size_ = correct.size();
+            inner_str_ = "+" + correct;
+            
+            // When there is no sign, we consider the BigInteger is positive by default.
+        }
+
+        for (auto it = correct.rbegin(); it != correct.rend() - has_signed; ++it) {
+            const auto char_input = *it;
+            storage_.push_back(char_input - '0');
+        }
     }
+
+    /**
+     * @program:     BigInteger::BigInteger
+     * @description: A Copy Constructor.
+     */
     BigInteger(const BigInteger& copy) {
         storage_ = copy.storage_;
         inner_str_ = copy.inner_str_;
         size_ = copy.size_;
+        is_positive_ = copy.is_positive_;
     }
+
+    /**
+     * @program:     BigInteger::BigInteger
+     * @description: A Move Construtor.
+     */
     BigInteger(BigInteger&& move) {
         storage_ = std::move(move.storage_);
         size_ = move.size_;
         inner_str_ = move.inner_str_;
+        is_positive_ = move.is_positive_;
         move.size_ = 0;
         move.storage_.clear();
         move.storage_.shrink_to_fit();
+        move.is_positive_ = false;
     }
+
+    /**
+     * @program:     operator=
+     * @description: The = operator function, same to Copy Constructor.
+     */
     BigInteger& operator=(const BigInteger& assgin) {
         storage_ = assgin.storage_;
         size_ = assgin.size_;
         inner_str_ = assgin.inner_str_;
+        is_positive_ = assgin.is_positive_;
         return *this;
     }
     BigInteger() = default;
     ~BigInteger() = default;
+
+    /**
+     * @program:     operator+
+     * @description: The + operator function.
+     */
     BigInteger operator+(BigInteger& another) {
         unsigned int max_length = std::max(size_, another.size_);
         BigInteger new_biginteger;
         new_biginteger.storage_.resize(max_length + 1, 0);
+
+        // For a + b, max_length = max(len(a), len(b)), to make the space of new BigInteger
+
         for (int i = 0; i < max_length; ++i) {
             int val_this = (i < storage_.size()) ? storage_[i] : 0;
             int val_another = (i < another.storage_.size()) ? another.storage_[i] : 0;
@@ -181,9 +327,17 @@ struct BigInteger {
             return std::make_pair(quotient, copy_of_this);
         }
     }
+
+    /**
+     * @program:     operator==
+     * @description: Check if the two BigInteger is equal. O(n)
+     * @another:     Refference to another BigInteger object.
+     */
     bool operator==(BigInteger& another) {
         if (size_ != another.size_) {
-            return false;
+            return false;   // If size is not equal, then they are not equal.
+        } else if (is_positive_ != another.is_positive_) {
+            return false;   // If sign is not equal, then they are not equal.
         } else {
             for (int i = 0; i <= size_ - 1; ++i) {
                 if (storage_[i] != another.storage_[i]) {
@@ -193,13 +347,26 @@ struct BigInteger {
             return true;
         }
     }
+
+    /**
+     * @program:     operator>
+     * @description: Check if a > b is true. O(n)
+     * @another:     Refference to another BigInteger object.
+     */
     bool operator>(BigInteger& another) {
         unsigned int count = 0;
+
+        // count is for comparing with the size.
+
         if (size_ < another.size_) {
-            return false;
+            return false;   // len(a) < len(b) => a < b
         } else if (size_ > another.size_) {
-            return true;
-        } else {
+            return true;    // len(a) > len(b) => a > b
+        } else if (!is_positive_ && another.is_positive_) {
+            return false;   // sign(a) = -, sign(b) = + => a < b
+        } else if (is_positive_ && !another.is_positive_) {
+            return true;    // sign(a) = +, sign(b) = - => a > b
+        } else if (is_positive_ && another.is_positive_) {
             for (int i = size_ - 1; i >= 0; i--) {
                 if (storage_[i] < another.storage_[i]) {
                     return false;
@@ -210,32 +377,32 @@ struct BigInteger {
                 }
             }
             return !(count == size_);
-        }
-    }
-    bool operator<(BigInteger& another) {
-        unsigned int count = 0;
-        if (size_ > another.size_) {
-            return false;
-        } else if (size_ < another.size_) {
-            return true;
         } else {
             for (int i = size_ - 1; i >= 0; i--) {
-                if (storage_[i] > another.storage_[i]) {
-                    return false;
+                if (storage_[i] < another.storage_[i]) {
+                    return true;
                 } else if (storage_[i] == another.storage_[i]) {
                     count++;
                 } else {
-                    return true;
+                    return false;
                 }
             }
             return !(count == size_);
         }
+    }
+
+
+    bool operator<(BigInteger& another) {
+        return !((*this > another) || (*this == another));
     }
     bool operator<=(BigInteger& another) {
         return (*this < another) || (*this == another);
     }
     bool operator>=(BigInteger& another) {
         return (*this > another) || (*this == another);
+    }
+    bool operator!=(BigInteger& another) {
+        return !(*this == another);
     }
     std::string& toString() {
         return inner_str_;
@@ -248,4 +415,11 @@ struct BigInteger {
         std::cout << std::get<0>(pair_bi) << " " << std::get<1>(pair_bi);
         return os;
     }
+  private:
+    std::vector<int> storage_;  // storage_ stores each digit
+    std::string inner_str_;     // inner_str_ is the std::string format of BigInteger
+    unsigned int size_;         // the size of BigInteger
+    bool is_positive_;          // TRUE when positive, FALSE when negative
 };
+
+#endif
