@@ -18,16 +18,21 @@ void testForComparison(std::string a, std::string b) {
               << "a >  b : " << boolean(big_a >  big_b) << "\n"
               << "a <  b : " << boolean(big_a <  big_b) << "\n"
               << "a == b : " << boolean(big_a == big_b) << "\n"
+              << "a != b : " << boolean(big_a != big_b) << "\n"
               << "a <= b : " << boolean(big_a <= big_b) << "\n"
               << "a >= b : " << boolean(big_a >= big_b) << "\n"
               << "--------------\n\n";
 }
 
 int main() {
-    // testValid("+++123");
+    testValid("+++123");
     testValid("+0000000123");
-    // testForComparison("123", "+123");
-    // testForComparison("-123", "+123");
-    // testForComparison("-12", "-120");
+    testValid("000012090");
+
+    testForComparison("123", "+123");
+    testForComparison("-123", "+123");
+    testForComparison("-12", "-120");
+    testForComparison("-12345", "+12");         // 2024-12-01 19:53 -12345 > 12 !!!
+    testForComparison("22345", "12346");
     return 0;
 }

@@ -358,15 +358,19 @@ struct BigInteger {
 
         // count is for comparing with the size.
 
-        if (size_ < another.size_) {
-            return false;   // len(a) < len(b) => a < b
-        } else if (size_ > another.size_) {
-            return true;    // len(a) > len(b) => a > b
+        if (is_positive_ && another.is_positive_ && size_ < another.size_) {
+            return false;   // a,b > 0, len(a) < len(b) => a < b
+        } else if (is_positive_ && another.is_positive_ && size_ > another.size_) {
+            return true;    // a,b > 0, len(a) > len(b) => a > b
+        } else if (!is_positive_ && !another.is_positive_ && size_ < another.size_) {
+            return true;    // a,b < 0, len(a) < len(b) => a > b
+        } else if (!is_positive_ && !another.is_positive_ && size_ > another.size_) {
+            return false;   // a,b < 0, len(a) > len(b) => a < b
         } else if (!is_positive_ && another.is_positive_) {
             return false;   // sign(a) = -, sign(b) = + => a < b
         } else if (is_positive_ && !another.is_positive_) {
             return true;    // sign(a) = +, sign(b) = - => a > b
-        } else if (is_positive_ && another.is_positive_) {
+        } else if (size_ == another.size_) {
             for (int i = size_ - 1; i >= 0; i--) {
                 if (storage_[i] < another.storage_[i]) {
                     return false;
@@ -391,30 +395,73 @@ struct BigInteger {
         }
     }
 
-
+    /**
+     * @program:     operator<
+     * @description: a < b = !(a == b or a > b)
+     * @another:     Refference to another BigInteger object.
+     */
     bool operator<(BigInteger& another) {
         return !((*this > another) || (*this == another));
     }
+
+    /**
+     * @program:     operator<
+     * @description: a <= b = a < b or a == b
+     * @another:     Refference to another BigInteger object.
+     */
     bool operator<=(BigInteger& another) {
         return (*this < another) || (*this == another);
     }
+    
+    /**
+     * @program:     operator<
+     * @description: a >= b = a > b or a == b
+     * @another:     Refference to another BigInteger object.
+     */
     bool operator>=(BigInteger& another) {
         return (*this > another) || (*this == another);
     }
+
+    /**
+     * @program:     operator<
+     * @description: a != b = !(a == b)
+     * @another:     Refference to another BigInteger object.
+     */
     bool operator!=(BigInteger& another) {
         return !(*this == another);
     }
+    
+    /**
+     * @program:     toString()
+     * @description: Return the string format of BigInteger object, including the sign.
+     */
     std::string& toString() {
         return inner_str_;
     }
+
+    /**
+     * @program:     operator<<
+     * @description: Bind with ostream, output the single BigInteger object.
+     * @os:          An ostream object.
+     * @bi:          An BigInteger object.
+     */
     friend std::ostream& operator<<(std::ostream& os, const BigInteger& bi) {
         std::cout << bi.inner_str_;
         return os;
     }
+
+    /**
+     * @program:     operator<<
+     * @description: Bind with ostream, output the pair of BigInteger objects, the 
+                     return value of operator/.
+     * @os:          An ostream object.
+     * @pair_bi:     A pair of BigInteger objects, std::pair<BigInteger, BigInteger>.
+     */
     friend std::ostream& operator<<(std::ostream& os, const std::pair<BigInteger, BigInteger> pair_bi) {
         std::cout << std::get<0>(pair_bi) << " " << std::get<1>(pair_bi);
         return os;
     }
+
   private:
     std::vector<int> storage_;  // storage_ stores each digit
     std::string inner_str_;     // inner_str_ is the std::string format of BigInteger
