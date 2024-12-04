@@ -37,6 +37,7 @@ set(TEST_INSERTION_SORT
 
 set(TEST_ARBITARY_PERCISION
     Other/arbitary_percision.h
+    Other/arbitary_percision.cc
     test/test_arbitary_percision.cpp
 )
 
